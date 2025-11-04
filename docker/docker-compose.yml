@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  legacy:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.legacy
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV: development
+    networks:
+      - automigrateai
+
+  cloud:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.cloud
+    ports:
+      - "5001:5001"
+    networks:
+      - automigrateai
+
+  proxy:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.proxy
+    ports:
+      - "8000:8000"
+    depends_on:
+      - legacy
+      - cloud
+    networks:
+      - automigrateai
+
+networks:
+  automigrateai:
+    driver: bridge
