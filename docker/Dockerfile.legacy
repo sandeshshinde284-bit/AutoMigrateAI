@@ -5,13 +5,12 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copy just the requirements file first from the backend/ directory
-COPY backend/requirements.txt requirements.txt
-
+COPY requirements.txt .
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Now copy the entire backend folder's contents into the /app directory
-COPY backend/ .
+COPY . .
 
 # Tell Cloud Run what command to run when the container starts
 # This is the FIX: It uses :$PORT and points to your legacy_system.py file
