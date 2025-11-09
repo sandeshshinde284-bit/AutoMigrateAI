@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy just the requirements file first from the backend/ directory
 # This step is cached if requirements.txt doesn't change
-COPY requirements.txt .
+COPY backend/requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
