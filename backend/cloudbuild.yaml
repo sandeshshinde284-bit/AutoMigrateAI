@@ -15,7 +15,7 @@ steps:
       # '.' uses 'backend/Dockerfile' as the build context, as your UI specified
       - "."
 
-# This pushes the built image to the registry
+# This pushes the built image to the registry1
 images:
   - "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA"
 
