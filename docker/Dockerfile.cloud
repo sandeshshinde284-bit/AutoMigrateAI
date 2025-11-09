@@ -11,7 +11,7 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Now copy the entire backend folder's contents into the /app directory
-COPY . .
+COPY backend/ .
 
 # Tell Cloud Run what command to run when the container starts
 # This is the FIX: We add '-k uvicorn.workers.UvicornWorker'
