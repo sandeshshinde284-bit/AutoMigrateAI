@@ -1,28 +1,29 @@
 steps:
-  # This step does what your UI settings did:
-  # 1. 'dir' changes into your 'backend/Docker' directory
-  # 2. 'args' runs the docker build command from within that directory
+  # This step builds your Docker image
   - name: "gcr.io/cloud-builders/docker"
-    dir: "backend/docker"
+    # 'args' lists the commands to run
     args:
+      # 'build' command
       - "build"
-      # This is your image name from screenshot image_807778.png
+      # '-t' tags the image with a name
       - "-t"
       - "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA"
-      # This is your Dockerfile name from screenshot image_807778.png
+      # '-f' points to the exact Dockerfile to use
+      # This path is correct based on your screenshot
       - "-f"
-      - "Dockerfile.proxy"
-      # '.' uses 'backend/Dockerfile' as the build context, as your UI specified
+      - "docker/Dockerfile.proxy"
+      # '.' tells Docker to use the
+      # entire root directory as the build context
       - "."
 
-# This pushes the built image to the registry1
+# This pushes the built image to the Google Container Registry
 images:
   - "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA"
 
-# This specifies the service account, just like your UI did
+# This specifies the custom service account for the build
 serviceAccount: "projects/automigrateai/serviceAccounts/automigrateai-sa@automigrateai.iam.gserviceaccount.com"
 
-# This tells Cloud Build to ONLY use Cloud Logging and
-# skip writing to the GCS bucket, which avoids the permission error.
+# This option fixes the GCS bucket permission error
+# by sending logs to Cloud Logging instead
 options:
   logging: CLOUD_LOGGING_ONLY

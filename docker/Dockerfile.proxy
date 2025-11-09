@@ -4,13 +4,30 @@ FROM python:3.11-slim
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements file and install dependencies
+# Copy the requirements file from the project root
 COPY requirements.txt requirements.txt
+
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the backend code into the container
-COPY . .
+# --- Copy all application files from the root ---
+# Copy the main proxy.py file
+COPY proxy.py .
+
+# Copy all other .py files from the root
+COPY auto_scaling.py .
+COPY cloud_service.py .
+COPY code_analyzer.py .
+COPY compliance_checker.py .
+COPY config.py .
+COPY digital_twin.py .
+COPY legacy_system.py .
+
+# Copy the entire backend folder (which contains models, services, etc.)
+COPY backend/ backend/
+
+# --- End of copy ---
 
 # Tell Cloud Run what command to run when the container starts
-# It uses Gunicorn, a production-grade serverss
+# This correctly looks for proxy.py and the 'app' variable inside it
 CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 proxy:app
