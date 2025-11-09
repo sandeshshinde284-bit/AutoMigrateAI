@@ -210,4 +210,16 @@ export const apiService = {
       return handleApiError(error, "runComplianceCheck");
     }
   },
+
+  async getAiChatResponse(prompt: string, history: any[]): Promise<any> {
+    try {
+      const response = await apiClient.post("/proxy/ai-chat", {
+        prompt,
+        history,
+      });
+      return response.data;
+    } catch (error) {
+      return handleApiError(error, "getAiChatResponse");
+    }
+  },
 };

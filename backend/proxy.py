@@ -1303,6 +1303,107 @@ def analyze_code():
             'message': 'Error during Gemini analysis. Check server logs.'
         }), 500
 
+@app.route('/proxy/ai-chat', methods=['POST'])
+def ai_chat():
+    """
+    Handle conversational chat with the AI Migration Advisor.
+    """
+    try:
+        data = request.get_json()
+        chat_history = data.get('history', [])
+        user_prompt = data.get('prompt', '')
+
+        if not user_prompt:
+            return jsonify({'success': False, 'error': 'No prompt provided'}), 400
+
+        # --- Create the AI's "Memory" / Context ---
+        # 1. Get the latest code analysis (if we have it)
+        # We'll use your 'find_legacy_system_file' helper
+        analysis_context = ""
+        try:
+            file_path = find_legacy_system_file()
+            if file_path:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    legacy_code = f.read()
+                # (We're just sending the code, not running the full analysis to save time)
+                analysis_context = f"Here is the legacy codebase: \n---{legacy_code}\n---"
+        except Exception as e:
+            print(f"[AI Chat] Warning: Could not load legacy code for context. {str(e)}")
+
+        # 2. Get the current migration plan
+        plan_context = json.dumps(migration_plan)
+
+        # 3. Create the System Instruction for Gemini
+        system_instruction = f"""
+        You are "Aura," the AI Migration Advisor for the AutoMigrate AI platform.
+        Your job is to answer questions from the migration team.
+        You MUST be concise, helpful, and use a technical but encouraging tone.
+        
+        HERE IS YOUR CURRENT KNOWLEDGE BASE:
+        
+        1.  **LIVE MIGRATION PLAN:** {plan_context}
+        
+        2.  **LEGACY CODE ANALYSIS:** {analysis_context}
+
+        When answering, use this context. For example, if asked about risk,
+        look at the plan and the code and provide a smart, short answer.
+        """
+
+        # 4. Initialize the Model (using your fallback logic)
+        models_to_try = [
+            "gemini-2.5-pro",
+            "gemini-1.5-pro",
+            "gemini-2.5-flash",
+            "gemini-1.5-flash",
+        ]
+        
+        ai_response_text = None
+        model_used = "None"
+        last_error = "No models were attempted."
+
+        for model_name in models_to_try:
+            try:
+                print(f"[AI Chat] Attempting chat with model: {model_name}")
+                model = GenerativeModel(
+                    model_name,
+                    system_instruction=[system_instruction] # Pass our context as a system instruction
+                )
+                
+                # Create a new chat session from the user's history
+                chat = model.start_chat(history=chat_history)
+                
+                # Send the new prompt
+                response = chat.send_message(user_prompt)
+                ai_response_text = response.text
+                model_used = model_name
+                
+                print(f"[AI Chat] Success with model: {model_name}")
+                break 
+
+            except Exception as e:
+                print(f"[AI Chat] WARNING: Model {model_name} failed. Error: {str(e)}")
+                last_error = str(e)
+                continue
+
+        if ai_response_text is None:
+            raise Exception(f"All chat models failed. Last error: {last_error}")
+
+        return jsonify({
+            'success': True,
+            'response': ai_response_text,
+            'model_used': model_used,
+            'timestamp': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        print(f"[PROXY] AI Chat error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': 'Error during Gemini chat. Check server logs.'
+        }), 500
+
+
 # ============================================
 # (All other endpoints: /validate-migration, /auto-scaling, etc.)
 # ...

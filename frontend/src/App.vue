@@ -34,6 +34,7 @@
       <!-- Content Area -->
       <div class="main-content">
         <Dashboard v-show="currentPage === 'dashboard'" />
+        <AiAdvisor v-show="currentPage === 'advisor'" />
         <MigrationProgress v-show="currentPage === 'migration'" />
         <PerformanceChart v-show="currentPage === 'performance'" />
         <CostMeter v-show="currentPage === 'cost'" />
@@ -68,6 +69,7 @@ import AutoScalingAdvisor from "./components/AutoScalingAdvisor.vue";
 import ComplianceCard from "./components/ComplianceCard.vue";
 import { useMetricsStore } from "./stores/metricsStore";
 import { mapState, mapActions } from "pinia";
+import AiAdvisor from "./components/AiAdvisor.vue";
 
 interface NavItem {
   id: string;
@@ -89,6 +91,7 @@ export default defineComponent({
     DigitalTwinValidator,
     AutoScalingAdvisor,
     ComplianceCard,
+    AiAdvisor,
   },
   data() {
     return {
@@ -98,6 +101,7 @@ export default defineComponent({
       refreshKey: 0 as number,
       navItems: [
         { id: "dashboard", label: "Dashboard", icon: "ri-dashboard-line" },
+        { id: "advisor", label: "AI Advisor", icon: "ri-robot-2-line" },
         { id: "migration", label: "Migration", icon: "ri-git-branch-line" },
         { id: "performance", label: "Performance", icon: "ri-line-chart-line" },
         { id: "cost", label: "Cost", icon: "ri-wallet-line" },
