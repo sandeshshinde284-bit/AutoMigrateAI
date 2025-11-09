@@ -23,6 +23,6 @@ images:
 serviceAccount: "projects/automigrateai/serviceAccounts/automigrateai-sa@automigrateai.iam.gserviceaccount.com"
 
 # This tells Cloud Build to ONLY use Cloud Logging and
-# skip writing to the GCS bucket, which avoids the permission error.
+# skip writing to the GCS bucket, which avoids the permission error..
 options:
   logging: CLOUD_LOGGING_ONLY
