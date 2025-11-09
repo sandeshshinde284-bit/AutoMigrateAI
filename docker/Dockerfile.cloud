@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy just the requirements file first from the backend/ directory
+# Copy just the requirements file first from the backend / directory
 COPY backend/requirements.txt .
 
 # Install dependencies
