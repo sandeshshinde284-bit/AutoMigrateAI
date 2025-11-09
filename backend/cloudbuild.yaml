@@ -1,35 +1,32 @@
 steps:
   # --- 1. Build the PROXY image ---
   - name: "gcr.io/cloud-builders/docker"
-    dir: "backend"
     args:
       - "build"
       - "-t"
       - "gcr.io/$PROJECT_ID/automigrate-proxy:$SHORT_SHA"
       - "-f"
-      - "Dockerfile.proxy"
+      - "docker/Dockerfile.proxy"
       - "."
 
   # --- 2. Build the LEGACY image ---
   - name: "gcr.io/cloud-builders/docker"
-    dir: "backend"
     args:
       - "build"
       - "-t"
       - "gcr.io/$PROJECT_ID/automigrate-legacy:$SHORT_SHA"
       - "-f"
-      - "dockerfile.legacy"
+      - "docker/dockerfile.legacy"
       - "."
 
   # --- 3. Build the CLOUD image ---
   - name: "gcr.io/cloud-builders/docker"
-    dir: "backend"
     args:
       - "build"
       - "-t"
       - "gcr.io/$PROJECT_ID/automigrate-cloud:$SHORT_SHA"
       - "-f"
-      - "dockerfile.cloud"
+      - "docker/dockerfile.cloud"
       - "."
 
   # --- 4. Push all three images ---
