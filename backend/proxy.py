@@ -1196,8 +1196,23 @@ def analyze_code():
         with open(file_path, 'r', encoding='utf-8') as f:
             legacy_code = f.read()
 
-        # 2. Initialize the Gemini Model
-        model = GenerativeModel("gemini-1.5-pro-preview-0409")
+        models_to_try = [
+            "gemini-2.0-flash",
+            "gemini-2.5-flash", 
+            "gemini-1.5-flash",
+            "gemini-2.5-pro",
+            "gemini-1.5-pro",
+        ]
+        model = None
+        for model_name in models_to_try:
+            try:
+                model = GenerativeModel(model_name)
+                model.generate_content("test", generation_config={"max_output_tokens": 2})
+                print(f"   ✅ Using {model_name}")
+                break
+            except Exception as e:
+                print(f"   ⚠️  {model_name} unavailable")
+                continue    
 
         # 3. Create a detailed prompt
         prompt = f"""
