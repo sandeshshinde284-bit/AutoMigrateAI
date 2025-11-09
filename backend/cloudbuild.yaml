@@ -1,6 +1,6 @@
 steps:
   # This step does what your UI settings did:
-  # 1. 'dir' changes into your 'backend/Dockerfile' directory
+  # 1. 'dir' changes into your 'backend/Docker' directory
   # 2. 'args' runs the docker build command from within that directory
   - name: "gcr.io/cloud-builders/docker"
     dir: "backend/docker"
