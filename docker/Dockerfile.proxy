@@ -1,6 +1,16 @@
+# Use an official Python runtime as a parent image
 FROM python:3.11-slim
+
+# Set the working directory in the container
 WORKDIR /app
-COPY backend/requirements.txt .
-RUN pip install -r requirements.txt
-COPY backend/ .
-CMD ["python", "proxy.py"]
+
+# Copy the requirements file and install dependencies
+COPY requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the backend code into the container
+COPY . .
+
+# Tell Cloud Run what command to run when the container starts
+# It uses Gunicorn, a production-grade servers
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 proxy:app
