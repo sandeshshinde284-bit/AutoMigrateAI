@@ -4,8 +4,7 @@ import axios from "axios";
 // const API_URL = "http://localhost:8000";
 
 // This is the SINGLE source of truth for your backend URL
-const API_URL =
-  "https://automigrateai-service-157263375859.us-central1.run.app";
+const API_URL = "https://automigrate-proxy-157263375859.us-central1.run.app";
 
 interface MetricsResponse {
   total_requests: number;
