@@ -16,7 +16,7 @@ steps:
       - "-t"
       - "gcr.io/$PROJECT_ID/automigrate-legacy:$SHORT_SHA"
       - "-f"
-      - "docker/dockerfile.legacy"
+      - "docker/Dockerfile.legacy"
       - "."
 
   # --- 3. Build the CLOUD image ---
@@ -26,7 +26,7 @@ steps:
       - "-t"
       - "gcr.io/$PROJECT_ID/automigrate-cloud:$SHORT_SHA"
       - "-f"
-      - "docker/dockerfile.cloud"
+      - "docker/Dockerfile.cloud"
       - "."
 
   # --- 4. Push all three images ---
