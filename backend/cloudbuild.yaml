@@ -1,5 +1,5 @@
 steps:
-  # This step builds your Docker image
+  # STEP 1: Build the Docker image
   - name: "gcr.io/cloud-builders/docker"
     # 'args' lists the commands to run
     args:
@@ -15,10 +15,30 @@ steps:
       # '.' tells Docker to use the
       # entire root directory as the build context
       - "."
+  # STEP 2: Push the image to Google Container Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/automigrate-proxy:$SHORT_SHA"]
+
+  # STEP 3: Deploy the image to Cloud Run
+  - name: "gcr.io/google-cloud-sdk/gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "automigrate-proxy" # The name of your service
+      - "--image"
+      - "gcr.io/$PROJECT_ID/automigrate-proxy:$SHORT_SHA"
+      - "--region"
+      - "us-central1" # Or your chosen region
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated" # Makes it public
+      # This links it to your service account
+      - "--service-account"
+      - "automigrateai-sa@automigrateai.iam.gserviceaccount.com"
 
 # This pushes the built image to the Google Container Registry
-images:
-  - "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA"
+# images:
+#   - "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA"
 
 # This specifies the custom service account for the build
 serviceAccount: "projects/automigrateai/serviceAccounts/automigrateai-sa@automigrateai.iam.gserviceaccount.com"
