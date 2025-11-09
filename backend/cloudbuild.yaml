@@ -1,49 +1,49 @@
 steps:
-  # STEP 1: Build the Docker image
+  # STEP 1: Build the container image
   - name: "gcr.io/cloud-builders/docker"
-    # 'args' lists the commands to run
     args:
-      # 'build' command
       - "build"
-      # '-t' tags the image with a name
       - "-t"
       - "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA"
-      # '-f' points to the exact Dockerfile to use
-      # This path is correct based on your screenshot
       - "-f"
       - "docker/Dockerfile.proxy"
-      # '.' tells Docker to use the
-      # entire root directory as the build context
       - "."
-  # STEP 2: Push the image to Google Container Registry
-  - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "gcr.io/$PROJECT_ID/automigrate-proxy:$SHORT_SHA"]
 
-  # STEP 3: Deploy the image to Cloud Run
-  - name: "gcr.io/google-cloud-sdk/gcloud"
+  # STEP 2: Push the container image to Google Container Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "push",
+        "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA",
+      ]
+
+  # STEP 3: Deploy the container image to Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
     args:
       - "run"
       - "deploy"
-      - "automigrate-proxy" # The name of your service
+      # This will be your service name in Cloud Run
+      - "automigrateai-service"
+      # This is the image we just built and pushed
       - "--image"
-      - "gcr.io/$PROJECT_ID/automigrate-proxy:$SHORT_SHA"
+      - "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA"
+      # This uses the region from your build log
       - "--region"
-      - "us-central1" # Or your chosen region
-      - "--platform"
-      - "managed"
-      - "--allow-unauthenticated" # Makes it public
-      # This links it to your service account
+      - "us-central1"
+      # This makes your service public on the internet
+      - "--allow-unauthenticated"
+      # This uses the same service account for the deployed app
       - "--service-account"
       - "automigrateai-sa@automigrateai.iam.gserviceaccount.com"
 
-# This pushes the built image to the Google Container Registry
-# images:
-#   - "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA"
+# This section is now handled by Step 2
+images:
+  - "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA"
 
-# This specifies the custom service account for the build
+# This specifies the service account for the build *itself*
 serviceAccount: "projects/automigrateai/serviceAccounts/automigrateai-sa@automigrateai.iam.gserviceaccount.com"
 
 # This option fixes the GCS bucket permission error
-# by sending logs to Cloud Logging instead
 options:
   logging: CLOUD_LOGGING_ONLY
