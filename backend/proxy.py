@@ -828,7 +828,7 @@
 # ============================================
 
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS  
 import requests
 import time
 import random
@@ -840,7 +840,7 @@ import os
 
 # --- AI & CLOUD IMPORTS ---
 import vertexai
-from vertexai.generative_models import GenerativeModel, Part
+from vertexai.generative_models import GenerativeModel
 # --------------------------
 
 # --- LOCAL MODULE IMPORTS ---
