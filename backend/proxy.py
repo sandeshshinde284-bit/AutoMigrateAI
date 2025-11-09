@@ -1395,7 +1395,7 @@ def ai_chat():
             return jsonify({'success': False, 'error': 'Could not initialize any AI chat models.'}), 500
         
         # Create a new chat session from the user's history
-        chat = model.start_chat(history=chat_history)
+        chat = model.start_chat(history=chat_history_dicts)
         
         # Send the new prompt
         response = chat.send_message(user_prompt)

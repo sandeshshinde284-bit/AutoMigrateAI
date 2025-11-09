@@ -31,7 +31,7 @@ interface MigrationResponse {
 // Create axios instance
 const apiClient = axios.create({
   baseURL: API_URL,
-  timeout: 10000, // Increased timeout for AI calls
+  timeout: 60000, // Increased timeout for AI calls
   headers: {
     "Content-Type": "application/json",
   },
