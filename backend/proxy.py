@@ -836,7 +836,7 @@ import os
 
 # --- AI & CLOUD IMPORTS ---
 import vertexai
-from vertexai.generative_models import GenerativeModel
+from vertexai.generative_models import GenerativeModel, Part, Content
 
 # --- LOCAL MODULE IMPORTS ---
 from digital_twin import digital_twin as validator
@@ -1360,7 +1360,14 @@ def ai_chat():
         When answering, use this context. For example, if asked about risk,
         look at the plan and the code and provide a smart, short answer.
         """
-
+        # Convert the list of dicts from the frontend into a list of Content objects
+        converted_history = []
+        for message in chat_history_dicts:
+            role = message.get('role', 'user')
+            text = message.get('parts', [{}])[0].get('text', '')
+            converted_history.append(Content(role=role, parts=[Part.from_text(text)]))
+        # --- END OF FIX ---
+        
         # 4. Initialize the Model
         model = None
         models_to_try = [
