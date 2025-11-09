@@ -1,44 +1,49 @@
 steps:
   # --- 1. Build the PROXY image ---
-  - name: "gcr.io/cloud-builders/docker"
+  # Using the new mirrored builder path
+  - name: "mirror.gcr.io/cloud-builders/docker"
     args:
       - "build"
       - "-t"
       - "gcr.io/$PROJECT_ID/automigrate-proxy:$SHORT_SHA"
       - "-f"
-      - "docker/Dockerfile.proxy"
+      - "docker/Dockerfile.proxy" # Fixed case
       - "."
 
   # --- 2. Build the LEGACY image ---
-  - name: "gcr.io/cloud-builders/docker"
+  # Using the new mirrored builder path
+  - name: "mirror.gcr.io/cloud-builders/docker"
     args:
       - "build"
       - "-t"
       - "gcr.io/$PROJECT_ID/automigrate-legacy:$SHORT_SHA"
       - "-f"
-      - "docker/Dockerfile.legacy"
+      - "docker/Dockerfile.legacy" # Fixed case
       - "."
 
   # --- 3. Build the CLOUD image ---
-  - name: "gcr.io/cloud-builders/docker"
+  # Using the new mirrored builder path
+  - name: "mirror.gcr.io/cloud-builders/docker"
     args:
       - "build"
       - "-t"
       - "gcr.io/$PROJECT_ID/automigrate-cloud:$SHORT_SHA"
       - "-f"
-      - "docker/Dockerfile.cloud"
+      - "docker/Dockerfile.cloud" # Fixed case
       - "."
 
   # --- 4. Push all three images ---
-  - name: "gcr.io/cloud-builders/docker"
+  - name: "mirror.gcr.io/cloud-builders/docker"
     args: ["push", "gcr.io/$PROJECT_ID/automigrate-proxy:$SHORT_SHA"]
-  - name: "gcr.io/cloud-builders/docker"
+  - name: "mirror.gcr.io/cloud-builders/docker"
     args: ["push", "gcr.io/$PROJECT_ID/automigrate-legacy:$SHORT_SHA"]
-  - name: "gcr.io/cloud-builders/docker"
+  - name: "mirror.gcr.io/cloud-builders/docker"
     args: ["push", "gcr.io/$PROJECT_ID/automigrate-cloud:$SHORT_SHA"]
 
   # --- 5. Deploy the PROXY service ---
-  - name: "gcr.io/google-cloud-sdk/gcloud"
+  # Using the new mirrored, standard gcloud builder
+  - name: "mirror.gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud # Added required entrypoint
     args:
       - "run"
       - "deploy"
@@ -54,7 +59,9 @@ steps:
       - "automigrateai-sa@automigrateai.iam.gserviceaccount.com"
 
   # --- 6. Deploy the LEGACY service ---
-  - name: "gcr.io/google-cloud-sdk/gcloud"
+  # Using the new mirrored, standard gcloud builder
+  - name: "mirror.gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud # Added required entrypoint
     args:
       - "run"
       - "deploy"
@@ -70,7 +77,9 @@ steps:
       - "automigrateai-sa@automigrateai.iam.gserviceaccount.com"
 
   # --- 7. Deploy the CLOUD service ---
-  - name: "gcr.io/google-cloud-sdk/gcloud"
+  # Using the new mirrored, standard gcloud builder
+  - name: "mirror.gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud # Added required entrypoint
     args:
       - "run"
       - "deploy"
