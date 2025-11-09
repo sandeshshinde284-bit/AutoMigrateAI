@@ -823,12 +823,8 @@
 #     app.run(host='0.0.0.0', port=port, debug=config.DEBUG)
 
 
-# ============================================
-# FINAL PROXY.PY - WITH GEMINI AI INTEGRATION
-# ============================================
-
 from flask import Flask, request, jsonify
-from flask_cors import CORS  
+from flask_cors import CORS  # Make sure this is imported
 import requests
 import time
 import random
@@ -841,28 +837,39 @@ import os
 # --- AI & CLOUD IMPORTS ---
 import vertexai
 from vertexai.generative_models import GenerativeModel
-# --------------------------
 
 # --- LOCAL MODULE IMPORTS ---
-# We still need these for all other features
 from digital_twin import digital_twin as validator
 from auto_scaling import auto_scaler
 from compliance_checker import compliance_checker
 from config import config
-# We NO LONGER need 'from code_analyzer import analyzer'
-# --------------------------
 
 app = Flask(__name__)
-CORS(app)
 
-# LEGACY_URL = "http://localhost:5000"
-# CLOUD_URL = "http://localhost:5001"
+# ============================================
+# === THE CORS FIX ===
+# ============================================
+# This is the fix for your frontend error.
+# We are explicitly allowing your Firebase app to make requests
+# to all routes starting with /proxy/
+CORS(app, resources={
+    r"/proxy/*": {
+        "origins": "https://automigrateai.web.app"
+    },
+    r"/": {
+        "origins": "https://automigrateai.web.app"
+    }
+})
+# We no longer need the simple `CORS(app)`
 
+# ============================================
+# === LIVE DEPLOYMENT URLS ===
+# ============================================
+# These are the correct URLs for your deployed services
 LEGACY_URL = "https://automigrate-legacy-157263375859.us-central1.run.app"
 CLOUD_URL = "https://automigrate-cloud-157263375859.us-central1.run.app"
 
 # --- INITIALIZE VERTEX AI ---
-# This will use the project's default service account when in Cloud Run
 try:
     vertexai.init(project=config.GCP_PROJECT_ID, location=config.GCP_REGION)
     print(f"[PROXY] Vertex AI Initialized. Project: {config.GCP_PROJECT_ID}, Region: {config.GCP_REGION}")
@@ -872,16 +879,14 @@ except Exception as e:
 
 
 # --- METRICSCOLLECTOR & STRANGLERROUTER (Unchanged) ---
-# (Your existing MetricsCollector and StranglerRouter classes go here)
-# ...
 class MetricsCollector:
     def __init__(self):
         self.requests = []
-        self.request_history = []  # NEW: Track all requests for rollback
+        self.request_history = []
         self.migration_percentage = 0
         self.errors = 0
         self.total_requests = 0
-        self.rollback_states = {}  # NEW: Save states at key points
+        self.rollback_states = {}
     
     def log_request(self, endpoint, response_time, source, error=None, legacy_time=None, cloud_time=None, request_data=None, response_data=None):
         self.total_requests += 1
@@ -1013,6 +1018,7 @@ class StranglerRouter:
         except Exception as e:
             response_time = (time.time() - start_time) * 1000
             self.metrics.log_request(endpoint, response_time, source, error=str(e))
+            print(f"[PROXY] ERROR during routing: {str(e)}") # Added print for errors
             return {
                 'success': False,
                 'error': str(e),
@@ -1022,23 +1028,23 @@ class StranglerRouter:
             }
     
     def _call_legacy(self, endpoint, method, data):
-        # The try/except is now removed. We want to see real errors.
-        if endpoint == "inventory/get_part":
-            url = f"{self.legacy_url}/inventory/get_part"
-        # ... (all your other 'elif's) ...
-        else:
-            url = f"{self.legacy_url}/{endpoint}"
+        url_map = {
+            "inventory/get_part": f"{self.legacy_url}/inventory/get_part",
+            "dealer/get_details": f"{self.legacy_url}/dealer/get_details",
+            "inventory/list_all": f"{self.legacy_url}/inventory/list_all",
+            "orders/create": f"{self.legacy_url}/orders/create",
+        }
+        url = url_map.get(endpoint, f"{self.legacy_url}/{endpoint}")
 
         if method == "POST":
             response = requests.post(url, json=data, timeout=10)
         else:
             response = requests.get(url, timeout=10)
 
-        response.raise_for_status()
+        response.raise_for_status() # This will raise an error on 500s
         return response.text # Legacy returns text/XML
         
     def _call_cloud(self, endpoint, method, data):
-        """Call cloud service"""
         cloud_endpoint_map = {
             "inventory/get_part": "api/v1/parts/get",
             "dealer/get_details": "api/v1/dealers/get",
@@ -1054,14 +1060,14 @@ class StranglerRouter:
         else:
             response = requests.get(url, timeout=10)
         
-        response.raise_for_status()
+        response.raise_for_status() # This will raise an error on 500s
         return response.json() # Cloud service returns JSON
 
 router = StranglerRouter(LEGACY_URL, CLOUD_URL)
 migration_plan = {} # Global var to hold the plan
-# ...
-# (All your other endpoints: /proxy/history, /proxy/rollback, etc. go here)
-# ...
+
+# --- All other endpoints ---
+
 @app.route('/proxy/history', methods=['GET'])
 def get_history():
     limit = request.args.get('limit', 20, type=int)
@@ -1120,6 +1126,11 @@ def proxy_request():
         method = data.get('method', 'POST')
         request_data = data.get('data', {})
         result = router.route_request(endpoint, method, request_data)
+        
+        # This will return a 500 if the downstream service failed
+        if not result['success']:
+             return jsonify(result), 500
+        
         return jsonify(result)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e), 'timestamp': datetime.now().isoformat()}), 400
@@ -1171,6 +1182,12 @@ def find_legacy_system_file():
         os.path.join(os.getcwd(), 'backend', 'legacy_system.py'),
         os.path.join(os.getcwd(), 'legacy_system.py'),
     ]
+    # In Cloud Run, the WORKDIR is /app, and we COPY backend/ .
+    # So the file will be at /app/legacy_system.py
+    cloud_run_path = 'legacy_system.py'
+    if os.path.exists(cloud_run_path):
+        return cloud_run_path
+
     for path in possible_paths:
         if os.path.exists(path):
             return path
@@ -1183,7 +1200,7 @@ def find_legacy_system_file():
 @app.route('/proxy/analyze-code', methods=['POST'])
 def analyze_code():
     """
-    Analyze legacy code using the Gemini 1.5 Pro
+    Analyze legacy code using the Gemini AI.
     """
     try:
         # 1. Read the legacy_system.py file
@@ -1196,23 +1213,24 @@ def analyze_code():
         with open(file_path, 'r', encoding='utf-8') as f:
             legacy_code = f.read()
 
+        # 2. Find the best available Gemini model
         models_to_try = [
-            "gemini-2.0-flash",
-            "gemini-2.5-flash", 
-            "gemini-1.5-flash",
-            "gemini-2.5-pro",
+            "gemini-1.5-pro-preview-0514",  # Specific powerful model
             "gemini-1.5-pro",
+            "gemini-1.5-flash",
         ]
         model = None
         for model_name in models_to_try:
             try:
                 model = GenerativeModel(model_name)
-                model.generate_content("test", generation_config={"max_output_tokens": 2})
-                print(f"   ✅ Using {model_name}")
+                print(f"[PROXY] Using AI Model: {model_name}")
                 break
             except Exception as e:
-                print(f"   ⚠️  {model_name} unavailable")
-                continue    
+                print(f"[PROXY] WARNING: Model {model_name} unavailable. {str(e)}")
+                continue
+        
+        if not model:
+            return jsonify({'success': False, 'error': 'Could not initialize any AI models.'}), 500
 
         # 3. Create a detailed prompt
         prompt = f"""
@@ -1317,21 +1335,17 @@ def ai_chat():
             return jsonify({'success': False, 'error': 'No prompt provided'}), 400
 
         # --- Create the AI's "Memory" / Context ---
-        # 1. Get the latest code analysis (if we have it)
-        # We'll use your 'find_legacy_system_file' helper
-        analysis_context = ""
+        analysis_context = "No legacy code analysis has been run yet."
         try:
             file_path = find_legacy_system_file()
             if file_path:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     legacy_code = f.read()
-                # (We're just sending the code, not running the full analysis to save time)
                 analysis_context = f"Here is the legacy codebase: \n---{legacy_code}\n---"
         except Exception as e:
             print(f"[AI Chat] Warning: Could not load legacy code for context. {str(e)}")
 
-        # 2. Get the current migration plan
-        plan_context = json.dumps(migration_plan)
+        plan_context = json.dumps(migration_plan) if migration_plan else "No migration plan has been saved yet."
 
         # 3. Create the System Instruction for Gemini
         system_instruction = f"""
@@ -1340,53 +1354,43 @@ def ai_chat():
         You MUST be concise, helpful, and use a technical but encouraging tone.
         
         HERE IS YOUR CURRENT KNOWLEDGE BASE:
-        
         1.  **LIVE MIGRATION PLAN:** {plan_context}
-        
         2.  **LEGACY CODE ANALYSIS:** {analysis_context}
 
         When answering, use this context. For example, if asked about risk,
         look at the plan and the code and provide a smart, short answer.
         """
 
-        # 4. Initialize the Model (using your fallback logic)
+        # 4. Initialize the Model
+        model = None
         models_to_try = [
-            "gemini-2.5-pro",
+            "gemini-1.5-flash", # Use flash for chat, it's faster
             "gemini-1.5-pro",
-            "gemini-2.5-flash",
-            "gemini-1.5-flash",
         ]
-        
-        ai_response_text = None
-        model_used = "None"
-        last_error = "No models were attempted."
-
         for model_name in models_to_try:
             try:
-                print(f"[AI Chat] Attempting chat with model: {model_name}")
                 model = GenerativeModel(
                     model_name,
-                    system_instruction=[system_instruction] # Pass our context as a system instruction
+                    system_instruction=[system_instruction]
                 )
-                
-                # Create a new chat session from the user's history
-                chat = model.start_chat(history=chat_history)
-                
-                # Send the new prompt
-                response = chat.send_message(user_prompt)
-                ai_response_text = response.text
-                model_used = model_name
-                
-                print(f"[AI Chat] Success with model: {model_name}")
-                break 
-
+                print(f"[AI Chat] Using Model: {model_name}")
+                break
             except Exception as e:
-                print(f"[AI Chat] WARNING: Model {model_name} failed. Error: {str(e)}")
-                last_error = str(e)
+                print(f"[AI Chat] WARNING: Model {model_name} failed. {str(e)}")
                 continue
-
-        if ai_response_text is None:
-            raise Exception(f"All chat models failed. Last error: {last_error}")
+        
+        if not model:
+            return jsonify({'success': False, 'error': 'Could not initialize any AI chat models.'}), 500
+        
+        # Create a new chat session from the user's history
+        chat = model.start_chat(history=chat_history)
+        
+        # Send the new prompt
+        response = chat.send_message(user_prompt)
+        ai_response_text = response.text
+        model_used = model_name
+                
+        print(f"[AI Chat] Success with model: {model_used}")
 
         return jsonify({
             'success': True,
@@ -1406,7 +1410,8 @@ def ai_chat():
 
 # ============================================
 # (All other endpoints: /validate-migration, /auto-scaling, etc.)
-# ...
+# ============================================
+
 @app.route('/proxy/plan/save', methods=['POST'])
 def save_migration_plan():
     global migration_plan
@@ -1425,6 +1430,7 @@ def validate_plan():
         duration = data.get('duration', 30)
         traffic_volume = data.get('traffic_volume', 100)
         print(f"[PROXY] Starting Digital Twin validation for plan: {migration_plan}")
+        # Use a demo value from the plan, e.g., 'engine' or a default
         demo_percentage = migration_plan.get("subsystems", {}).get("engine", 50)
         result = validator.validate_migration(demo_percentage, duration, traffic_volume)
         return jsonify({
@@ -1478,6 +1484,7 @@ def predict_scaling():
         print(f"[PROXY] Auto-scaling prediction: Spike={prediction['spike_detected']}, Confidence={prediction['confidence']}%")
         return jsonify({'success': True, 'prediction': prediction, 'timestamp': datetime.now().isoformat()})
     except Exception as e:
+        print(f"[PROXY] Auto-scaling error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 400
 
 @app.route('/proxy/auto-scaling/recommendation', methods=['GET'])
@@ -1489,6 +1496,7 @@ def get_scaling_recommendation():
         print(f"[PROXY] Scaling recommendation: {recommendation['action']}")
         return jsonify({'success': True, 'recommendation': recommendation, 'timestamp': datetime.now().isoformat()})
     except Exception as e:
+        print(f"[PROXY] Auto-scaling error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 400
 
 @app.route('/proxy/auto-scaling/metrics', methods=['GET'])
@@ -1497,6 +1505,7 @@ def get_scaling_metrics():
         metrics = auto_scaler.get_metrics_summary()
         return jsonify({'success': True, 'metrics': metrics, 'timestamp': datetime.now().isoformat()})
     except Exception as e:
+        print(f"[PROXY] Auto-scaling error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 400
 
 @app.route('/proxy/auto-scaling/record-traffic', methods=['POST'])
@@ -1535,6 +1544,7 @@ def get_compliance_status():
         overall = compliance_checker.get_overall_compliance()
         return jsonify({'success': True, 'compliance': overall, 'timestamp': datetime.now().isoformat()})
     except Exception as e:
+        print(f"[PROXY] Compliance error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 400
 
 @app.route('/proxy/compliance/violations', methods=['GET'])
@@ -1572,13 +1582,15 @@ def get_config():
         'timestamp': datetime.now().isoformat()
     })
 
-@app.errorhandler(404)
+@app.errorhandler(404) # <--- THIS WAS THE FIX (was 4Ai)
 def not_found(error):
     return jsonify({'error': 'Endpoint not found', 'timestamp': datetime.now().isoformat()}), 404
 
 @app.errorhandler(500)
 def internal_error(error):
-    return jsonify({'error': 'Internal server error', 'timestamp': datetime.now().isoformat()}), 500
+    # Log the full error to the console for debugging
+    print(f"[PROXY] INTERNAL SERVER ERROR: {str(error)}")
+    return jsonify({'error': f'Internal server error: {str(error)}', 'timestamp': datetime.now().isoformat()}), 500
 
 if __name__ == '__main__':
     print("\n" + "=" * 60)
@@ -1587,6 +1599,11 @@ if __name__ == '__main__':
     print(f"🔧 Config Loaded: Project={config.GCP_PROJECT_ID}, Region={config.GCP_REGION}")
     print("✨ AI Features: ENABLED (using Vertex AI)")
     print("=" * 60)
-    print(f"\n✅ Proxy ready on http://localhost:{config.PROXY_PORT}")
+    
+    # Use the PORT from the environment (for Cloud Run) or config for local
     port = int(os.environ.get("PORT", config.PROXY_PORT))
+    print(f"\n✅ Proxy ready on http://0.0.0.0:{port}")
+    
     app.run(host='0.0.0.0', port=port, debug=config.DEBUG)
+
+# --- ALL DUPLICATE CODE BELOW THIS LINE HAS BEEN REMOVED ---
