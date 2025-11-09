@@ -311,6 +311,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { apiService } from "../services/api.ts";
 
 interface ValidationResult {
   validation_score: number;
@@ -361,20 +362,25 @@ export default defineComponent({
       this.validation = null;
 
       try {
-        const response = await fetch(
-          "http://localhost:8000/proxy/validate-migration",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              percentage: this.testPercentage,
-              duration: this.duration,
-              traffic_volume: this.trafficVolume,
-            }),
-          }
-        );
+        // const response = await fetch(
+        //   "http://localhost:8000/proxy/validate-migration",
+        //   {
+        //     method: "POST",
+        //     headers: { "Content-Type": "application/json" },
+        //     body: JSON.stringify({
+        //       percentage: this.testPercentage,
+        //       duration: this.duration,
+        //       traffic_volume: this.trafficVolume,
+        //     }),
+        //   }
+        // );
 
-        const data = await response.json();
+        // const data = await response.json();
+        const data = await apiService.validateMigration(
+          this.testPercentage,
+          this.duration,
+          this.trafficVolume
+        );
 
         if (data.success) {
           this.validation = data.validation;
@@ -393,10 +399,11 @@ export default defineComponent({
     },
     async fetchNextStep() {
       try {
-        const response = await fetch(
-          `http://localhost:8000/proxy/next-migration-step?current=${this.testPercentage}`
-        );
-        const data = await response.json();
+        // const response = await fetch(
+        //   `http://localhost:8000/proxy/next-migration-step?current=${this.testPercentage}`
+        // );
+        // const data = await response.json();
+        const data = await apiService.fetchNextStep(this.testPercentage);
         if (data.success) {
           this.nextStep = data.next_step;
         }

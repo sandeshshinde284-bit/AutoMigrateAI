@@ -273,6 +273,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { apiService } from "../services/api.ts";
 
 interface ComplianceStatus {
   overall_score: number;
@@ -303,16 +304,17 @@ export default defineComponent({
       } as ComplianceStatus,
       lastCheck: null as any,
       checking: false,
-      refreshInterval: null as NodeJS.Timeout | null,
+      refreshInterval: null as ReturnType<typeof setInterval> | null,
     };
   },
   methods: {
     async fetchComplianceStatus() {
       try {
-        const response = await fetch(
-          "http://localhost:8000/proxy/compliance/status"
-        );
-        const data = await response.json();
+        // const response = await fetch(
+        //   "http://localhost:8000/proxy/compliance/status"
+        // );
+        // const data = await response.json();
+        const data = await apiService.fetchComplianceStatus();
         if (data.success) {
           this.compliance = data.compliance;
         }
@@ -335,19 +337,23 @@ export default defineComponent({
           user_id: 12345,
         };
 
-        const response = await fetch(
-          "http://localhost:8000/proxy/compliance/check",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              request: testRequest,
-              response: testResponse,
-            }),
-          }
-        );
+        // const response = await fetch(
+        //   "http://localhost:8000/proxy/compliance/check",
+        //   {
+        //     method: "POST",
+        //     headers: { "Content-Type": "application/json" },
+        //     body: JSON.stringify({
+        //       request: testRequest,
+        //       response: testResponse,
+        //     }),
+        //   }
+        // );
 
-        const data = await response.json();
+        // const data = await response.json();
+        const data = await apiService.runComplianceCheck(
+          testRequest,
+          testResponse
+        );
 
         if (data.success) {
           this.lastCheck = data;

@@ -146,9 +146,9 @@ import { defineComponent } from "vue";
 import { apiService } from "../services/api";
 import { useMetricsStore } from "../stores/metricsStore";
 
-interface Metrics {
-  cost_saved: number;
-}
+// interface Metrics {
+//   cost_saved: number;
+// }
 
 export default defineComponent({
   name: "CostMeter",

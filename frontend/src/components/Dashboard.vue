@@ -106,18 +106,17 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { useMetricsStore } from "../stores/metricsStore"; // <-- IMPORT
-import { apiService } from "../services/api";
 
-interface Metrics {
-  total_requests: number;
-  legacy_requests: number;
-  cloud_requests: number;
-  error_count: number;
-  legacy_avg_time: number;
-  cloud_avg_time: number;
-  cost_saved: number;
-  migration_percentage: number;
-}
+// interface Metrics {
+//   total_requests: number;
+//   legacy_requests: number;
+//   cloud_requests: number;
+//   error_count: number;
+//   legacy_avg_time: number;
+//   cloud_avg_time: number;
+//   cost_saved: number;
+//   migration_percentage: number;
+// }
 
 export default defineComponent({
   name: "Dashboard",

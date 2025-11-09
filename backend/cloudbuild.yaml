@@ -1,49 +1,94 @@
 steps:
-  # STEP 1: Build the container image
+  # --- 1. Build the PROXY image ---
   - name: "gcr.io/cloud-builders/docker"
+    dir: "backend"
     args:
       - "build"
       - "-t"
-      - "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA"
+      - "gcr.io/$PROJECT_ID/automigrate-proxy:$SHORT_SHA"
       - "-f"
-      - "docker/Dockerfile.proxy"
+      - "Dockerfile.proxy"
       - "."
 
-  # STEP 2: Push the container image to Google Container Registry
+  # --- 2. Build the LEGACY image ---
   - name: "gcr.io/cloud-builders/docker"
+    dir: "backend"
     args:
-      [
-        "push",
-        "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA",
-      ]
+      - "build"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/automigrate-legacy:$SHORT_SHA"
+      - "-f"
+      - "dockerfile.legacy"
+      - "."
 
-  # STEP 3: Deploy the container image to Cloud Run
-  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-    entrypoint: gcloud
+  # --- 3. Build the CLOUD image ---
+  - name: "gcr.io/cloud-builders/docker"
+    dir: "backend"
+    args:
+      - "build"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/automigrate-cloud:$SHORT_SHA"
+      - "-f"
+      - "dockerfile.cloud"
+      - "."
+
+  # --- 4. Push all three images ---
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/automigrate-proxy:$SHORT_SHA"]
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/automigrate-legacy:$SHORT_SHA"]
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/automigrate-cloud:$SHORT_SHA"]
+
+  # --- 5. Deploy the PROXY service ---
+  - name: "gcr.io/google-cloud-sdk/gcloud"
     args:
       - "run"
       - "deploy"
-      # This will be your service name in Cloud Run
-      - "automigrateai-service"
-      # This is the image we just built and pushed
+      - "automigrate-proxy"
       - "--image"
-      - "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA"
-      # This uses the region from your build log
+      - "gcr.io/$PROJECT_ID/automigrate-proxy:$SHORT_SHA"
       - "--region"
       - "us-central1"
-      # This makes your service public on the internet
+      - "--platform"
+      - "managed"
       - "--allow-unauthenticated"
-      # This uses the same service account for the deployed app
       - "--service-account"
       - "automigrateai-sa@automigrateai.iam.gserviceaccount.com"
 
-# This section is now handled by Step 2
-images:
-  - "gcr.io/automigrateai/github.com/sandeshshinde204-bit/automigrateai:$SHORT_SHA"
+  # --- 6. Deploy the LEGACY service ---
+  - name: "gcr.io/google-cloud-sdk/gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "automigrate-legacy"
+      - "--image"
+      - "gcr.io/$PROJECT_ID/automigrate-legacy:$SHORT_SHA"
+      - "--region"
+      - "us-central1"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+      - "--service-account"
+      - "automigrateai-sa@automigrateai.iam.gserviceaccount.com"
 
-# This specifies the service account for the build *itself*
+  # --- 7. Deploy the CLOUD service ---
+  - name: "gcr.io/google-cloud-sdk/gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "automigrate-cloud"
+      - "--image"
+      - "gcr.io/$PROJECT_ID/automigrate-cloud:$SHORT_SHA"
+      - "--region"
+      - "us-central1"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+      - "--service-account"
+      - "automigrateai-sa@automigrateai.iam.gserviceaccount.com"
+
+# --- Build Configuration ---
 serviceAccount: "projects/automigrateai/serviceAccounts/automigrateai-sa@automigrateai.iam.gserviceaccount.com"
-
-# This option fixes the GCS bucket permission error
 options:
   logging: CLOUD_LOGGING_ONLY

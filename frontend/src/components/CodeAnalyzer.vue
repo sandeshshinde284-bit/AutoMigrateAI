@@ -251,6 +251,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { apiService } from "../services/api";
 
 interface Analysis {
   total_endpoints: number;
@@ -288,17 +289,18 @@ export default defineComponent({
       this.error = null;
 
       try {
-        const response = await fetch(
-          "http://localhost:8000/proxy/analyze-code",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ file: "legacy_system.py" }),
-          }
-        );
+        // const response = await fetch(
+        //   "http://localhost:8000/proxy/analyze-code",
+        //   {
+        //     method: "POST",
+        //     headers: { "Content-Type": "application/json" },
+        //     body: JSON.stringify({ file: "legacy_system.py" }),
+        //   }
+        // );
 
-        const data = await response.json();
+        // const data = await response.json();
 
+        const data = await apiService.analyzeCode("legacy_system.py");
         if (data.success) {
           this.analysis = data.analysis;
           console.log("[CodeAnalyzer] Analysis complete:", data.analysis);

@@ -180,6 +180,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { apiService } from "../services/api.ts";
 
 interface Metrics {
   current_load: number;
@@ -224,16 +225,17 @@ export default defineComponent({
       } as Metrics,
       prediction: null as Prediction | null,
       recommendation: null as Recommendation | null,
-      refreshInterval: null as NodeJS.Timeout | null,
+      refreshInterval: null as ReturnType<typeof setInterval> | null,
     };
   },
   methods: {
     async fetchMetrics() {
       try {
-        const response = await fetch(
-          "http://localhost:8000/proxy/auto-scaling/metrics"
-        );
-        const data = await response.json();
+        // const response = await fetch(
+        //   "http://localhost:8000/proxy/auto-scaling/metrics"
+        // );
+        // const data = await response.json();
+        const data = await apiService.fetchAutoScalingMetrics();
         if (data.success) {
           this.metrics = data.metrics;
         }
@@ -243,10 +245,11 @@ export default defineComponent({
     },
     async fetchPrediction() {
       try {
-        const response = await fetch(
-          "http://localhost:8000/proxy/auto-scaling/predict"
-        );
-        const data = await response.json();
+        // const response = await fetch(
+        //   "http://localhost:8000/proxy/auto-scaling/predict"
+        // );
+        // const data = await response.json();
+        const data = await apiService.fetchAutoScalingPrediction();
         if (data.success) {
           this.prediction = data.prediction;
         }
@@ -256,12 +259,15 @@ export default defineComponent({
     },
     async fetchRecommendation() {
       try {
-        const response = await fetch(
-          `http://localhost:8000/proxy/auto-scaling/recommendation?capacity=${
-            this.metrics.current_load + 50
-          }`
+        // const response = await fetch(
+        //   `http://localhost:8000/proxy/auto-scaling/recommendation?capacity=${
+        //     this.metrics.current_load + 50
+        //   }`
+        // );
+        // const data = await response.json();
+        const data = await apiService.fetchAutoScalingRecommendation(
+          this.metrics.current_load + 50
         );
-        const data = await response.json();
         if (data.success) {
           this.recommendation = data.recommendation;
         }

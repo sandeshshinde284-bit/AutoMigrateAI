@@ -111,7 +111,6 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { apiService } from "../services/api";
 import { useMetricsStore } from "../stores/metricsStore";
 
 interface Subsystem {

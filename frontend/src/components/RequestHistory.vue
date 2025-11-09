@@ -160,7 +160,7 @@ export default defineComponent({
       requestHistory: [] as Request[],
       selectedRequest: null as Request | null,
       selectedRequestId: null as number | null,
-      refreshInterval: null as NodeJS.Timeout | null,
+      refreshInterval: null as ReturnType<typeof setInterval> | null,
       totalRequests: 0,
       //currentMigration: 0,
       rollbackMessage: null as RollbackMessage | null,
@@ -169,7 +169,7 @@ export default defineComponent({
   computed: {
     lastRequestTime(): string {
       if (this.requestHistory.length === 0) return "N/A";
-      return this.formatTime(this.requestHistory[0].timestamp);
+      return this.formatTime(this.requestHistory[0]!.timestamp);
     },
     currentMigration() {
       return useMetricsStore().migration_percentage;
@@ -178,10 +178,11 @@ export default defineComponent({
   methods: {
     async fetchRequestHistory() {
       try {
-        const response = await fetch(
-          "http://localhost:8000/proxy/history?limit=30"
-        );
-        const data = await response.json();
+        // const response = await fetch(
+        //   "http://localhost:8000/proxy/history?limit=30"
+        // );
+        // const data = await response.json();
+        const data = await apiService.fetchRequestHistory(30);
         if (data.success) {
           this.requestHistory = data.history;
           this.totalRequests = data.total_requests;

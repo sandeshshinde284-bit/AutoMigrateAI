@@ -63,7 +63,6 @@ import ControlPanel from "./components/ControlPanel.vue";
 import TrafficStats from "./components/TrafficStats.vue";
 import RequestHistory from "./components/RequestHistory.vue";
 import CodeAnalyzer from "./components/CodeAnalyzer.vue";
-import { apiService } from "./services/api";
 import DigitalTwinValidator from "./components/DigitalTwinValidator.vue";
 import AutoScalingAdvisor from "./components/AutoScalingAdvisor.vue";
 import ComplianceCard from "./components/ComplianceCard.vue";
@@ -95,7 +94,7 @@ export default defineComponent({
     return {
       currentPage: "dashboard" as string,
       // globalMigration: 0 as number,
-      globalRefreshInterval: null as NodeJS.Timeout | null,
+      globalRefreshInterval: null as ReturnType<typeof setInterval> | null,
       refreshKey: 0 as number,
       navItems: [
         { id: "dashboard", label: "Dashboard", icon: "ri-dashboard-line" },

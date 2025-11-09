@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Now copy the entire backend folder's contents into the /app directory
 # This includes all .py files, subfolders (models, services), etc.
-COPY backend/ .
+COPY backend . .
 
 # Tell Cloud Run what command to run when the container starts
 # This correctly looks for proxy.py (which is now at /app/proxy.py)
