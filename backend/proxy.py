@@ -1215,9 +1215,11 @@ def analyze_code():
 
         # 2. Find the best available Gemini model
         models_to_try = [
-            "gemini-1.5-pro-preview-0514",  # Specific powerful model
-            "gemini-1.5-pro",
+            "gemini-2.0-flash",
+            "gemini-2.5-flash", 
             "gemini-1.5-flash",
+            "gemini-2.5-pro",
+            "gemini-1.5-pro",
         ]
         model = None
         for model_name in models_to_try:
@@ -1371,7 +1373,10 @@ def ai_chat():
         # 4. Initialize the Model
         model = None
         models_to_try = [
-            "gemini-1.5-flash", # Use flash for chat, it's faster
+            "gemini-2.0-flash",
+            "gemini-2.5-flash", 
+            "gemini-1.5-flash",
+            "gemini-2.5-pro",
             "gemini-1.5-pro",
         ]
         for model_name in models_to_try:
