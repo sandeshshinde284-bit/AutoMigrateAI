@@ -15,8 +15,10 @@ import json
 import xml.etree.ElementTree as ET
 from datetime import datetime
 import random
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # ============================================
 # LEGACY DATABASE (In-Memory)

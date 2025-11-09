@@ -14,7 +14,7 @@
         >
           <div class="message-bubble">
             <div v-if="message.role === 'model'" class="model-icon">Aura</div>
-            <div class="message-text">{{ message.parts[0].text }}</div>
+            <div class="message-text">{{ message.parts[0]?.text }}</div>
           </div>
         </div>
         <div v-if="loading" class="chat-message model">
