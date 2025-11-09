@@ -19,5 +19,6 @@ class Config:
     # Features
     ENABLE_METRICS = os.getenv('ENABLE_METRICS', 'true').lower() == 'true'
     MOCK_DATA = os.getenv('MOCK_DATA', 'true').lower() == 'true'
+    INVESTMENT_REQUIRED = int(os.getenv('INVESTMENT_REQUIRED', 2500000))
 
 config = Config()
