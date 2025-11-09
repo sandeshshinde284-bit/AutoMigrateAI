@@ -817,4 +817,5 @@ if __name__ == '__main__':
     print("   GET  /proxy/rollback-states      (Get rollback options)")
     print("\n" + "=" * 60)
     
-    app.run(host='0.0.0.0', port=8000, debug=False)
+    port = int(os.environ.get("PORT", config.PROXY_PORT))
+    app.run(host='0.0.0.0', port=port, debug=config.DEBUG)

@@ -14,6 +14,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ .
 
 # Tell Cloud Run what command to run when the container starts
-# This is the FIX: It uses :$PORT and points to your cloud_service.py file
-# (Assuming your file is 'cloud_service.py' and Flask app variable is 'app')
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 cloud_service:app
+# This is the FIX: We add '-k uvicorn.workers.UvicornWorker'
+# This tells Gunicorn to use Uvicorn for the ASGI (FastAPI) app.
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 -k uvicorn.workers.UvicornWorker cloud_service:app

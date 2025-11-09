@@ -8,6 +8,7 @@
 # Format: XML (OLD FORMAT)
 # ============================================
 
+import os
 from flask import Flask, request, Response
 import time
 import json
@@ -303,4 +304,5 @@ if __name__ == '__main__':
     print("   GET  /metrics/system")
     print("\n" + "=" * 60)
     
-    app.run(host='0.0.0.0', port=5050, debug=False)
+    port = int(os.environ.get("PORT", 5050))
+    app.run(host='0.0.0.0', port=port, debug=False)

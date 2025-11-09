@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 import json
+import os
 
 app = FastAPI(
     title="VW Cloud Service",
@@ -300,5 +301,6 @@ async def root():
 # ============================================
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5001)
+   import uvicorn
+   port = int(os.environ.get("PORT", 5001))
+   uvicorn.run(app, host="0.0.0.0", port=port)
