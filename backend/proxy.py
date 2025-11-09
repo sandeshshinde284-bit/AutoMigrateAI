@@ -1328,7 +1328,7 @@ def ai_chat():
     """
     try:
         data = request.get_json()
-        chat_history = data.get('history', [])
+        chat_history_dicts = data.get('history', [])
         user_prompt = data.get('prompt', '')
 
         if not user_prompt:
@@ -1367,7 +1367,7 @@ def ai_chat():
             text = message.get('parts', [{}])[0].get('text', '')
             converted_history.append(Content(role=role, parts=[Part.from_text(text)]))
         # --- END OF FIX ---
-        
+
         # 4. Initialize the Model
         model = None
         models_to_try = [
