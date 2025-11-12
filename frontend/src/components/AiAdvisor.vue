@@ -90,7 +90,10 @@ export default defineComponent({
 
       try {
         // We send the history *except* for the initial welcome message
-        const historyForApi = this.history.slice(1);
+        const historyForApi = this.history.slice(1).map((msg) => ({
+          role: msg.role,
+          parts: msg.parts,
+        }));
 
         const data = await apiService.getAiChatResponse(prompt, historyForApi);
 

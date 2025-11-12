@@ -1365,9 +1365,14 @@ def ai_chat():
         # Convert the list of dicts from the frontend into a list of Content objects
         converted_history = []
         for message in chat_history_dicts:
+            # Skip any welcome messages from the model
             role = message.get('role', 'user')
-            text = message.get('parts', [{}])[0].get('text', '')
-            converted_history.append(Content(role=role, parts=[Part.from_text(text)]))
+            parts = message.get('parts', [])
+            if parts and len(parts) > 0:
+                text = parts[0].get('text', '')
+                if text:  # Only add if there's actual text content
+                    # Create the Content object properly
+                   converted_history.append(Content(role=role, parts=[Part.from_text(text)]))
         # --- END OF FIX ---
 
         # 4. Initialize the Model
@@ -1395,7 +1400,7 @@ def ai_chat():
             return jsonify({'success': False, 'error': 'Could not initialize any AI chat models.'}), 500
         
         # Create a new chat session from the user's history
-        chat = model.start_chat(history=chat_history_dicts)
+        chat = model.start_chat(history=converted_history)
         
         # Send the new prompt
         response = chat.send_message(user_prompt)
